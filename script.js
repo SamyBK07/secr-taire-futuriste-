@@ -6,8 +6,8 @@ let personality = {};
 let tasks = [];
 
 // Clés / endpoints
-const ASSEMBLYAI_KEY = '2d3dff825169489abaa1eb25d3e01f5c';
-const MISTRAL_ENDPOINT = 'PD85t8aUMKTkZGDlAWhOWyxywwYRkSq1';
+const ASSEMBLYAI_KEY = 'TON_ASSEMBLYAI_KEY';
+const MISTRAL_ENDPOINT = 'TON_ENDPOINT_MISTRAL';
 
 // Charger JSON locaux
 async function loadJSON() {
@@ -16,6 +16,10 @@ async function loadJSON() {
 
   const tasksResp = await fetch('tasks.json');
   tasks = await tasksResp.json();
+
+  // Charger tasks depuis localStorage si existant
+  const savedTasks = localStorage.getItem('tasks');
+  if (savedTasks) tasks = JSON.parse(savedTasks);
 
   updateProgress();
 }
@@ -26,6 +30,11 @@ function updateProgress() {
   const total = tasks.length || 1;
   const percent = (completed / total) * 100;
   progressBar.style.width = percent + "%";
+}
+
+// Sauvegarde tasks dans localStorage
+function saveTasks() {
+  localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
 // Fonction parler avec ondulation
@@ -46,16 +55,16 @@ function speak(text) {
 // Transcription avec AssemblyAI
 async function transcribeAudio(audioBlob) {
   const formData = new FormData();
-  formData.append('audio', audioBlob);
+  formData.append('file', audioBlob, 'audio.wav');
 
-  const response = await fetch('https://api.assemblyai.com/v2/upload', {
+  // Upload audio
+  const uploadResp = await fetch('https://api.assemblyai.com/v2/upload', {
     method: 'POST',
     headers: { 'Authorization': ASSEMBLYAI_KEY },
-    body: audioBlob
+    body: formData
   });
-
-  const data = await response.json();
-  const audioUrl = data.upload_url;
+  const uploadData = await uploadResp.json();
+  const audioUrl = uploadData.upload_url;
 
   // Créer transcription
   const transcriptionResp = await fetch('https://api.assemblyai.com/v2/transcript', {
@@ -65,8 +74,9 @@ async function transcribeAudio(audioBlob) {
   });
   const transcriptionData = await transcriptionResp.json();
 
-  // Polling pour transcription terminée
+  // Polling transcription
   let transcriptText = '';
+  const startTime = Date.now();
   while (true) {
     const statusResp = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptionData.id}`, {
       headers: { 'Authorization': ASSEMBLYAI_KEY }
@@ -79,6 +89,8 @@ async function transcribeAudio(audioBlob) {
       transcriptText = '';
       break;
     }
+    // Timeout 60s
+    if (Date.now() - startTime > 60000) break;
     await new Promise(r => setTimeout(r, 1000));
   }
   return transcriptText;
@@ -97,14 +109,9 @@ async function queryMistral(text) {
   });
   const data = await response.json();
 
-  // Mise à jour tasks si Mistral renvoie modifications
   if (data.tasks) {
     tasks = data.tasks;
-    await fetch('tasks.json', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(tasks, null, 2)
-    });
+    saveTasks();
   }
   return data.response;
 }
@@ -112,6 +119,7 @@ async function queryMistral(text) {
 // Capture audio + transcription + Mistral
 async function processAudio(audioBlob) {
   const transcript = await transcribeAudio(audioBlob);
+  if (!transcript) return "Je n'ai pas compris, peux-tu répéter ?";
   const responseText = await queryMistral(transcript);
   updateProgress();
   return responseText;
@@ -143,13 +151,20 @@ async function startListening() {
 
   mediaRecorder.start();
 
-  // Arrêt automatique après 5 sec pour exemple
+  // Arrêt automatique après 5 sec
   setTimeout(() => mediaRecorder.stop(), 5000);
 }
 
 // Clic sur micro
 microButton.addEventListener('click', startListening);
 
-// Initialisation
+// Précharger voix + JSON
 speechSynthesis.onvoiceschanged = () => {};
 loadJSON();
+
+// Enregistrer service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(() => console.log('Service Worker enregistré'))
+    .catch(err => console.log('Erreur SW', err));
+}
