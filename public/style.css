@@ -1,0 +1,60 @@
+body {
+  margin: 0;
+  background: radial-gradient(circle at center, #0f2027, #000);
+  font-family: 'Orbitron', sans-serif;
+  color: #00ffff;
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.progress-container {
+  width: 80%;
+  height: 6px;
+  background: #222;
+  border-radius: 4px;
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+
+#progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #00ffff;
+  transition: width 0.3s;
+}
+
+#micro-button {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00ffff, #005555);
+  box-shadow: 0 0 30px #00ffff;
+  cursor: pointer;
+}
+
+#micro-button.recording {
+  animation: pulse 1s infinite;
+  box-shadow: 0 0 40px red;
+}
+
+#micro-button.ondulating {
+  animation: wave 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes wave {
+  0% { box-shadow: 0 0 20px #00ffff; }
+  50% { box-shadow: 0 0 50px #00ffff; }
+  100% { box-shadow: 0 0 20px #00ffff; }
+}
