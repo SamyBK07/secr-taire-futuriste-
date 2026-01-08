@@ -1,79 +1,60 @@
 body {
   margin: 0;
-  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  background: radial-gradient(circle at center, #0f2027, #000);
   font-family: 'Orbitron', sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
   color: #00ffff;
 }
 
-.assistant-container {
-  text-align: center;
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Barre de progression futuriste */
 .progress-container {
   width: 80%;
-  height: 20px;
-  background: rgba(0,255,255,0.2);
-  border-radius: 10px;
-  margin: 0 auto 30px auto;
+  height: 6px;
+  background: #222;
+  border-radius: 4px;
+  margin-bottom: 40px;
   overflow: hidden;
-  box-shadow: 0 0 20px #00ffff;
 }
 
-.progress-bar {
+#progress-bar {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #00ffff, #00ff99);
-  border-radius: 10px;
-  transition: width 0.5s ease-in-out;
+  background: #00ffff;
+  transition: width 0.3s;
 }
 
-/* Bouton micro central */
-.micro-button {
+#micro-button {
   width: 120px;
   height: 120px;
-  background: #00ffff;
   border-radius: 50%;
-  box-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff;
-  margin: 0 auto;
+  background: radial-gradient(circle, #00ffff, #005555);
+  box-shadow: 0 0 30px #00ffff;
   cursor: pointer;
-  position: relative;
-  transition: transform 0.2s ease;
 }
 
-.micro-button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 140px;
-  height: 140px;
-  margin-left: -70px;
-  margin-top: -70px;
-  border-radius: 50%;
-  border: 2px solid #00ffff;
-  opacity: 0;
-  animation: pulse 1.5s infinite;
+#micro-button.recording {
+  animation: pulse 1s infinite;
+  box-shadow: 0 0 40px red;
 }
 
-.micro-button.ondulating::after {
-  opacity: 1;
-  animation: pulse 1.5s infinite, breathe 1s infinite alternate;
+#micro-button.ondulating {
+  animation: wave 1.2s infinite;
 }
 
-/* Animations */
 @keyframes pulse {
-  0% { transform: scale(0.7); opacity: 0.5; }
-  50% { transform: scale(1.2); opacity: 0.1; }
-  100% { transform: scale(0.7); opacity: 0.5; }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
-@keyframes breathe {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+@keyframes wave {
+  0% { box-shadow: 0 0 20px #00ffff; }
+  50% { box-shadow: 0 0 50px #00ffff; }
+  100% { box-shadow: 0 0 20px #00ffff; }
 }
