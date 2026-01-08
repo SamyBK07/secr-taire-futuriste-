@@ -9,7 +9,7 @@ let stream = null;
 let chunks = [];
 
 // 🔑 AssemblyAI (clé publique autorisée)
-const ASSEMBLYAI_KEY = "TA_CLE_ASSEMBLYAI";
+const ASSEMBLYAI_KEY = "2d3dff825169489abaa1eb25d3e01f5c";
 
 // ==============================
 // INIT
