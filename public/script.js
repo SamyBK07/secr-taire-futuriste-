@@ -1,97 +1,77 @@
-const microButton = document.getElementById("micro-button");
-const progressBar = document.getElementById("progress-bar");
-
-let personality = {};
-let tasks = [];
-
-let mediaRecorder;
-let stream;
-let chunks = [];
-
-async function loadData() {
-  console.log("📂 Chargement personality & tasks");
-  personality = await fetch("/personality.json").then(r => r.json());
-  tasks = await fetch("/tasks.json").then(r => r.json());
-  updateProgress();
-}
-
-function updateProgress() {
-  const done = tasks.filter(t => t.done).length;
-  const total = tasks.length || 1;
-  progressBar.style.width = `${(done / total) * 100}%`;
-}
-
-function speak(text) {
-  console.log("🔊 Speak :", text);
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.voice = speechSynthesis.getVoices().find(v => v.lang === "fr-FR");
-  microButton.classList.add("ondulating");
-  speechSynthesis.speak(utterance);
-  utterance.onend = () => microButton.classList.remove("ondulating");
-}
-
 async function startListening() {
-  console.log("🎤 Start listening");
+  try {
+    log("🎤 Start listening");
 
-  stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  mediaRecorder = new MediaRecorder(stream);
-  chunks = [];
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    chunks = [];
 
-  mediaRecorder.ondataavailable = e => chunks.push(e.data);
+    mediaRecorder.ondataavailable = e => chunks.push(e.data);
 
-  mediaRecorder.onstop = async () => {
-    stream.getTracks().forEach(t => t.stop());
+    mediaRecorder.onstop = async () => {
+      try {
+        stream.getTracks().forEach(t => t.stop());
 
-    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
-    console.log("📦 Audio blob :", blob.size, blob.type);
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+        log(`📦 Audio blob: ${blob.size} bytes (${blob.type})`);
 
-    const form = new FormData();
-    form.append("audio", blob, "audio.webm");
+        const form = new FormData();
+        form.append("audio", blob, "audio.webm");
 
-    console.log("🚀 Envoi vers /api/transcribe");
-    const transcriptRes = await fetch("/api/transcribe", {
-      method: "POST",
-      body: form
-    });
+        log("🚀 Envoi vers /api/transcribe");
+        const transcriptRes = await fetch("/api/transcribe", {
+          method: "POST",
+          body: form
+        });
 
-    const transcript = await transcriptRes.json();
-    console.log("📝 Transcription reçue :", transcript.text);
+        if (!transcriptRes.ok) {
+          throw "Erreur transcription HTTP " + transcriptRes.status;
+        }
 
-    if (!transcript.text || transcript.text.trim() === "") {
-      speak("Je n’ai rien compris.");
-      return;
-    }
+        const transcript = await transcriptRes.json();
+        log("📝 Transcription: " + transcript.text);
 
-    console.log("🤖 Envoi vers Mistral");
-    const replyRes = await fetch("/api/mistral", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: transcript.text,
-        personality,
-        tasks
-      })
-    });
+        if (!transcript.text || transcript.text.trim() === "") {
+          speak("Je n’ai rien compris.");
+          return;
+        }
 
-    const reply = await replyRes.json();
-    console.log("✅ Réponse Mistral :", reply.response);
+        log("🤖 Envoi vers Mistral");
+        const replyRes = await fetch("/api/mistral", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: transcript.text,
+            personality,
+            tasks
+          })
+        });
 
-    speak(reply.response);
-  };
+        if (!replyRes.ok) {
+          throw "Erreur Mistral HTTP " + replyRes.status;
+        }
 
-  mediaRecorder.start();
-  microButton.classList.add("recording");
+        const reply = await replyRes.json();
+        log("✅ Réponse Mistral reçue");
 
-  setTimeout(() => {
-    console.log("⏹ Stop recording");
-    mediaRecorder.stop();
-    microButton.classList.remove("recording");
-  }, 10000);
-}
+        speak(reply.response);
 
-microButton.addEventListener("click", startListening);
-loadData();
+      } catch (err) {
+        logError(err);
+        speak("Une erreur est survenue.");
+      }
+    };
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js");
+    mediaRecorder.start();
+    microButton.classList.add("recording");
+
+    setTimeout(() => {
+      log("⏹ Stop recording");
+      mediaRecorder.stop();
+      microButton.classList.remove("recording");
+    }, 10000);
+
+  } catch (err) {
+    logError(err);
+  }
 }
