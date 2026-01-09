@@ -9,6 +9,7 @@ let stream;
 let chunks = [];
 
 async function loadData() {
+  console.log("📂 Chargement personality & tasks");
   personality = await fetch("/personality.json").then(r => r.json());
   tasks = await fetch("/tasks.json").then(r => r.json());
   updateProgress();
@@ -21,6 +22,7 @@ function updateProgress() {
 }
 
 function speak(text) {
+  console.log("🔊 Speak :", text);
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.voice = speechSynthesis.getVoices().find(v => v.lang === "fr-FR");
   microButton.classList.add("ondulating");
@@ -29,6 +31,8 @@ function speak(text) {
 }
 
 async function startListening() {
+  console.log("🎤 Start listening");
+
   stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   mediaRecorder = new MediaRecorder(stream);
   chunks = [];
@@ -37,17 +41,29 @@ async function startListening() {
 
   mediaRecorder.onstop = async () => {
     stream.getTracks().forEach(t => t.stop());
-    const blob = new Blob(chunks, { type: "audio/webm" });
+
+    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+    console.log("📦 Audio blob :", blob.size, blob.type);
 
     const form = new FormData();
-    form.append("audio", blob);
+    form.append("audio", blob, "audio.webm");
 
-    const transcript = await fetch("/api/transcribe", {
+    console.log("🚀 Envoi vers /api/transcribe");
+    const transcriptRes = await fetch("/api/transcribe", {
       method: "POST",
       body: form
-    }).then(r => r.json());
+    });
 
-    const reply = await fetch("/api/mistral", {
+    const transcript = await transcriptRes.json();
+    console.log("📝 Transcription reçue :", transcript.text);
+
+    if (!transcript.text || transcript.text.trim() === "") {
+      speak("Je n’ai rien compris.");
+      return;
+    }
+
+    console.log("🤖 Envoi vers Mistral");
+    const replyRes = await fetch("/api/mistral", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -55,7 +71,10 @@ async function startListening() {
         personality,
         tasks
       })
-    }).then(r => r.json());
+    });
+
+    const reply = await replyRes.json();
+    console.log("✅ Réponse Mistral :", reply.response);
 
     speak(reply.response);
   };
@@ -64,6 +83,7 @@ async function startListening() {
   microButton.classList.add("recording");
 
   setTimeout(() => {
+    console.log("⏹ Stop recording");
     mediaRecorder.stop();
     microButton.classList.remove("recording");
   }, 10000);
