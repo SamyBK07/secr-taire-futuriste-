@@ -1,31 +1,19 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Secrétaire Futuriste</title>
+<body style="background:red">
 
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <h1 style="color:white">DEBUG TEST</h1>
 
-  <!-- Barre de progression des tâches -->
-  <div class="progress-container">
-    <div id="progress-bar"></div>
+  <div id="debug-panel" style="
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:200px;
+    background:yellow;
+    color:black;
+    z-index:99999;
+  ">
+    <pre id="debug-log">DEBUG PANEL VISIBLE</pre>
   </div>
-
-  <!-- Bouton micro central -->
-  <div id="micro-button"></div>
-
-  <!-- ===== DEBUG PANEL (IMPORTANT) ===== -->
-  <div id="debug-panel">
-    <div id="debug-title">DEBUG</div>
-    <pre id="debug-log"></pre>
-  </div>
-  <!-- ================================= -->
 
   <script src="script.js"></script>
-
 </body>
-</html>
