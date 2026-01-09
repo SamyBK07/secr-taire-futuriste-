@@ -1,16 +1,12 @@
-const CACHE = "secretaire-v1";
-
 self.addEventListener("install", e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache =>
+    caches.open("assistant-cache").then(cache =>
       cache.addAll([
         "/",
         "/index.html",
         "/style.css",
         "/script.js",
-        "/manifest.json",
-        "/personality.json",
-        "/tasks.json"
+        "/manifest.json"
       ])
     )
   );
