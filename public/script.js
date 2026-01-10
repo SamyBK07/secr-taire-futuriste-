@@ -24,12 +24,15 @@ function setStatus(text, error = false) {
   statusEl.style.color = error ? '#ff4d4d' : '#00ffe1';
 }
 
-/* --------- ENREGISTREMENT --------- */
+/* --------- 🎙️ ENREGISTREMENT MP4 (iOS SAFE) --------- */
 async function recordAudio(seconds = 10) {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const recorder = new MediaRecorder(stream);
-  const chunks = [];
 
+  const recorder = new MediaRecorder(stream, {
+    mimeType: 'audio/mp4' // 👈 CRUCIAL iOS
+  });
+
+  const chunks = [];
   recorder.ondataavailable = e => chunks.push(e.data);
   recorder.start();
 
@@ -39,7 +42,7 @@ async function recordAudio(seconds = 10) {
   await new Promise(r => recorder.onstop = r);
   stream.getTracks().forEach(t => t.stop());
 
-  return new Blob(chunks, { type: 'audio/wav' });
+  return new Blob(chunks, { type: 'audio/mp4' });
 }
 
 /* --------- FLOW COMPLET --------- */
@@ -53,7 +56,7 @@ btn.onclick = async () => {
     setStatus("📝 Transcription");
 
     const form = new FormData();
-    form.append('audio', audio);
+    form.append('audio', audio, 'audio.mp4'); // 👈 filename important
 
     const res = await fetch('/api/process', {
       method: 'POST',
