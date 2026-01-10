@@ -1,72 +1,50 @@
 body {
-  background: #000;
-  color: #0ff;
-  font-family: Arial, sans-serif;
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at center, #0a0f1f, #000);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  color: #00ffe1;
+  font-family: system-ui, -apple-system;
 }
 
-.progress-container {
-  width: 80%;
-  height: 6px;
-  background: #222;
-  margin-bottom: 30px;
-}
-
-#progress-bar {
-  height: 100%;
-  width: 0%;
-  background: #0ff;
-}
-
-#micro-button {
-  width: 120px;
-  height: 120px;
+.orb {
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
-  background: #0ff;
-  cursor: pointer;
-}
-
-#micro-button.recording {
-  animation: pulse 1s infinite;
-}
-
-#micro-button.ondulating {
-  animation: wave 1.2s infinite;
+  background: rgba(0, 255, 225, 0.05);
+  border: 2px solid rgba(0, 255, 225, 0.4);
+  box-shadow: 0 0 40px rgba(0, 255, 225, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  animation: pulse 4s infinite;
 }
 
 @keyframes pulse {
-  50% { transform: scale(1.1); }
+  0%, 100% { box-shadow: 0 0 30px rgba(0,255,225,.3); }
+  50% { box-shadow: 0 0 60px rgba(0,255,225,.6); }
 }
 
-@keyframes wave {
-  50% { box-shadow: 0 0 40px #0ff; }
-}
-#debug-panel {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  max-height: 40%;
-  background: rgba(0, 0, 0, 0.9);
-  color: #0ff;
-  font-size: 12px;
-  overflow-y: auto;
-  z-index: 9999;
-  padding: 10px;
-  box-sizing: border-box;
+#status {
+  padding: 20px;
+  font-size: 1.1rem;
 }
 
-#debug-title {
-  font-weight: bold;
-  margin-bottom: 6px;
-  color: #fff;
+button {
+  margin-top: 40px;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  background: #00ffe1;
+  color: #000;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
 }
 
-#debug-log {
-  white-space: pre-wrap;
-  word-break: break-word;
+button:active {
+  transform: scale(0.95);
 }
