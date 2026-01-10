@@ -4,59 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Secrétaire Futuriste</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body style="background:#111; color:white; font-family:sans-serif;">
+<body>
 
-  <h1 style="text-align:center; margin-top:20px;">Secrétaire Futuriste</h1>
-
-  <!-- BARRE DE PROGRESSION -->
-  <div class="progress-container" style="width:80%; margin:20px auto; height:10px; background:#333; border-radius:5px;">
-    <div id="progress-bar" style="height:100%; width:0%; background:#00ffcc; border-radius:5px;"></div>
+  <div class="orb">
+    <div id="status">⏸ En attente</div>
   </div>
 
-  <!-- BOUTON MICRO CENTRAL -->
-  <div
-    id="micro-button"
-    style="
-      width:100px;
-      height:100px;
-      border-radius:50%;
-      background:#fff;
-      margin:40px auto;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:bold;
-      font-size:18px;
-      color:#000;
-    "
-  >
-    🎤
-  </div>
+  <button id="talkBtn">🎙️ Parler</button>
 
-  <!-- DEBUG PANEL -->
-  <div id="debug-panel" style="
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    max-height:40%;
-    background:rgba(0,0,0,0.9);
-    color:#0ff;
-    font-size:12px;
-    overflow-y:auto;
-    z-index:99999;
-    padding:10px;
-    box-sizing:border-box;
-  ">
-    <div id="debug-title" style="font-weight:bold; margin-bottom:6px; color:#fff;">DEBUG</div>
-    <pre id="debug-log">DEBUG PANEL VISIBLE</pre>
-  </div>
-
-  <!-- SCRIPT -->
   <script src="script.js"></script>
 </body>
 </html>
