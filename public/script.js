@@ -3,11 +3,12 @@ const statusEl = document.getElementById('status');
 
 let voice = null;
 
-// 🔊 Charger voix iPhone
+/* --------- VOIX IPHONE --------- */
 speechSynthesis.onvoiceschanged = () => {
   const voices = speechSynthesis.getVoices();
-  voice = voices.find(v => v.lang === 'fr-FR' && v.localService)
-       || voices.find(v => v.lang === 'fr-FR');
+  voice =
+    voices.find(v => v.lang === 'fr-FR' && v.localService)
+    || voices.find(v => v.lang === 'fr-FR');
 };
 
 function speak(text) {
@@ -23,29 +24,31 @@ function setStatus(text, error = false) {
   statusEl.style.color = error ? '#ff4d4d' : '#00ffe1';
 }
 
-async function recordWav(seconds = 10) {
+/* --------- ENREGISTREMENT --------- */
+async function recordAudio(seconds = 10) {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const mediaRecorder = new MediaRecorder(stream);
+  const recorder = new MediaRecorder(stream);
   const chunks = [];
 
-  mediaRecorder.ondataavailable = e => chunks.push(e.data);
-  mediaRecorder.start();
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.start();
 
   await new Promise(r => setTimeout(r, seconds * 1000));
-  mediaRecorder.stop();
+  recorder.stop();
 
-  await new Promise(r => mediaRecorder.onstop = r);
+  await new Promise(r => recorder.onstop = r);
   stream.getTracks().forEach(t => t.stop());
 
   return new Blob(chunks, { type: 'audio/wav' });
 }
 
+/* --------- FLOW COMPLET --------- */
 btn.onclick = async () => {
   try {
     speak("Je t'écoute.");
     setStatus("🎙️ Enregistrement");
 
-    const audio = await recordWav(10);
+    const audio = await recordAudio(10);
 
     setStatus("📝 Transcription");
 
@@ -57,12 +60,13 @@ btn.onclick = async () => {
       body: form
     });
 
-    if (!res.ok) throw new Error("Serveur");
+    if (!res.ok) throw new Error();
 
     setStatus("🧠 Réponse");
 
     const { reply } = await res.json();
     speak(reply);
+
     setStatus("✅ Terminé");
 
   } catch (e) {
