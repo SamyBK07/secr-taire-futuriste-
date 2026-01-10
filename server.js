@@ -1,98 +1,68 @@
-import express from "express";
-import fetch from "node-fetch";
-import multer from "multer";
-import dotenv from "dotenv";
-import fs from "fs";
+import express from 'express';
+import multer from 'multer';
+import fetch from 'node-fetch';
+import fs from 'fs';
+import FormData from 'form-data';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
 const app = express();
-const upload = multer({ dest: "uploads/" });
-const PORT = process.env.PORT || 3000;
+const upload = multer({ dest: 'uploads/' });
 
-app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static('public'));
 
-app.use((req, _res, next) => {
-  console.log("➡️", req.method, req.url);
-  next();
-});
-
-// 🎧 TRANSCRIPTION WHISPER
-app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
+app.post('/api/process', upload.single('audio'), async (req, res) => {
   try {
-    console.log("🎧 Audio reçu");
+    // 🎙️ Whisper
+    const fd = new FormData();
+    fd.append('file', fs.createReadStream(req.file.path));
+    fd.append('model', 'whisper-1');
 
-    const audioFile = fs.createReadStream(req.file.path);
+    const whisper = await fetch(
+      'https://api.openai.com/v1/audio/transcriptions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: fd
+      }
+    ).then(r => r.json());
 
-    const whisperRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: (() => {
-        const form = new FormData();
-        form.append("file", audioFile);
-        form.append("model", "whisper-1");
-        form.append("language", "fr");
-        return form;
-      })()
-    });
+    // 🧠 Mistral
+    const personality = JSON.parse(
+      fs.readFileSync('./public/personality.json', 'utf8')
+    );
 
-    const data = await whisperRes.json();
+    const mistral = await fetch(
+      'https://api.mistral.ai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'mistral-small',
+          messages: [
+            personality,
+            { role: 'user', content: whisper.text }
+          ]
+        })
+      }
+    ).then(r => r.json());
+
     fs.unlinkSync(req.file.path);
 
-    console.log("📝 Transcription :", data.text);
-    res.json({ text: data.text });
+    res.json({ reply: mistral.choices[0].message.content });
 
-  } catch (err) {
-    console.error("❌ Whisper error", err);
-    res.status(500).json({ error: "Whisper failed" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'processing_failed' });
   }
 });
 
-// 🤖 MISTRAL
-app.post("/api/mistral", async (req, res) => {
-  try {
-    const { prompt, personality, tasks } = req.body;
-
-    console.log("📨 Prompt Mistral :", prompt);
-
-    const mistralRes = await fetch("https://api.mistral.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.MISTRAL_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "mistral-small-latest",
-        messages: [
-          {
-            role: "system",
-            content: `
-Nom: ${personality?.name || ""}
-Ton: ${personality?.tone || ""}
-Fonctions: ${(personality?.functions || []).join(", ")}
-Tâches: ${JSON.stringify(tasks || [])}
-`
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      })
-    });
-
-    const data = await mistralRes.json();
-    res.json({ response: data.choices[0].message.content });
-
-  } catch (err) {
-    console.error("❌ Mistral error", err);
-    res.status(500).json({ error: "Mistral failed" });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Serveur actif sur http://localhost:${PORT}`);
-});
+app.listen(3000, () =>
+  console.log('🚀 Secrétaire futuriste sur http://localhost:3000')
+);
