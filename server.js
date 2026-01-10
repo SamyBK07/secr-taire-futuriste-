@@ -12,11 +12,15 @@ app.use(express.static('public'));
 
 app.post('/api/process', upload.single('audio'), async (req, res) => {
   try {
+    console.log('MIME:', req.file.mimetype);
+    console.log('SIZE:', req.file.size);
+
     /* ---------- WHISPER ---------- */
     const formData = new FormData();
     formData.append(
       'file',
-      fs.createReadStream(req.file.path)
+      fs.createReadStream(req.file.path),
+      'audio.mp4' // 👈 filename CRUCIAL
     );
     formData.append('model', 'whisper-1');
 
@@ -34,7 +38,7 @@ app.post('/api/process', upload.single('audio'), async (req, res) => {
     const whisper = await whisperRes.json();
 
     if (!whisper.text) {
-      throw new Error('Whisper failed');
+      throw new Error('Whisper transcription failed');
     }
 
     /* ---------- MISTRAL ---------- */
