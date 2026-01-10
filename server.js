@@ -2,11 +2,15 @@ import express from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { Blob } from 'buffer';
 
 dotenv.config();
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
+
+console.log('OPENAI KEY EXISTS:', !!process.env.OPENAI_API_KEY);
+console.log('MISTRAL KEY EXISTS:', !!process.env.MISTRAL_API_KEY);
 
 app.use(express.static('public'));
 
@@ -16,11 +20,13 @@ app.post('/api/process', upload.single('audio'), async (req, res) => {
     console.log('SIZE:', req.file.size);
 
     /* ---------- WHISPER ---------- */
+    const audioBuffer = fs.readFileSync(req.file.path);
+
     const formData = new FormData();
     formData.append(
       'file',
-      fs.createReadStream(req.file.path),
-      'audio.mp4' // 👈 filename CRUCIAL
+      new Blob([audioBuffer], { type: req.file.mimetype }),
+      'audio.mp4'
     );
     formData.append('model', 'whisper-1');
 
@@ -35,10 +41,13 @@ app.post('/api/process', upload.single('audio'), async (req, res) => {
       }
     );
 
-    const whisper = await whisperRes.json();
+    const raw = await whisperRes.text();
+    console.log('WHISPER RAW:', raw);
 
-    if (!whisper.text) {
-      throw new Error('Whisper transcription failed');
+    const whisper = JSON.parse(raw);
+
+    if (!whisperRes.ok) {
+      throw new Error(whisper.error?.message || 'Whisper failed');
     }
 
     /* ---------- MISTRAL ---------- */
@@ -73,11 +82,11 @@ app.post('/api/process', upload.single('audio'), async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'processing_failed' });
+    console.error('❌ SERVER ERROR:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
 app.listen(3000, () => {
-  console.log('🚀 http://localhost:3000');
+  console.log('🚀 Server running');
 });
